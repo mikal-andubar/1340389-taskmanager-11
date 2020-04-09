@@ -11,7 +11,7 @@ const descriptionItems = [
 ];
 
 /**
- * Дефолтный списка дней повторения на основе массива DAYS
+ * Дефолтный список дней повторения на основе массива DAYS
  * @type {{}}
  */
 const defaultRepeatingDays = Object.fromEntries(DAYS.map((it) => [it, false]));
@@ -43,12 +43,11 @@ const getRandomArrayItem = (array) => array[getRandomInt(0, array.length)];
  */
 const getRandomDate = () => {
   const targetDate = new Date();
-  targetDate.setHours(getRandomInt(0, 24));
   const sign = getRandomBool() ? 1 : -1;
   const diffValue = sign * getRandomInt(0, 8);
 
   targetDate.setDate(targetDate.getDate() + diffValue);
-
+  targetDate.setHours(getRandomInt(0, 24), 0, 0, 0);
   return targetDate;
 };
 
@@ -81,6 +80,5 @@ const generateTask = () => {
  * @return {[]}
  */
 const generateTasks = (count) => new Array(count).fill(``).map(generateTask);
-
 
 export {generateTask, generateTasks};

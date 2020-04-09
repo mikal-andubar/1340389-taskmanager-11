@@ -7,25 +7,23 @@ import {formatTime} from "../utils";
  * @param {string} currentColor
  * @return {string}
  */
-const createColorsMarkup = (colors, currentColor) => {
-  return colors.map((color, index) => {
-    return (
-      `<input
-        type="radio"
-        id="color-${color}-${index}"
-        class="card__color-input card__color-input--${color} visually-hidden"
-        name="color"
-        value="${color}"
-        ${currentColor === color ? `checked` : ``}
-      />
-      <label
-        for="color-${color}-${index}"
-        class="card__color card__color--${color}"
-        >black</label
-      >`
-    );
-  }).join(`\n`);
-};
+const createColorsMarkup = (colors, currentColor) => (
+  colors.map((color, index) => (
+    `<input
+      type="radio"
+      id="color-${color}-${index}"
+      class="card__color-input card__color-input--${color} visually-hidden"
+      name="color"
+      value="${color}"
+      ${currentColor === color ? `checked` : ``}
+    />
+    <label
+      for="color-${color}-${index}"
+      class="card__color card__color--${color}"
+      >black</label
+    >`
+  )).join(`\n`)
+);
 
 /**
  * Создает разметку для списка дней недели
@@ -33,8 +31,8 @@ const createColorsMarkup = (colors, currentColor) => {
  * @param {{}} repeatingDays
  * @return {string}
  */
-const createRepeatingDaysMarkup = (days, repeatingDays) => {
-  return days.map((day, index) => {
+const createRepeatingDaysMarkup = (days, repeatingDays) => (
+  days.map((day, index) => {
     const isChecked = repeatingDays[day];
     return (
       `<input
@@ -47,8 +45,8 @@ const createRepeatingDaysMarkup = (days, repeatingDays) => {
       />
       <label class="card__repeat-day" for="repeat-${day}-${index}">${day}</label>`
     );
-  }).join(`\n`);
-};
+  }).join(`\n`)
+);
 
 /**
  * Создает шаблон редактора карточки задачи

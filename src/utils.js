@@ -3,9 +3,7 @@
  * @param {number} value
  * @return {string}
  */
-const castTimeFormat = (value) => {
-  return value < 10 ? `0${value}` : String(value);
-};
+const castTimeFormat = (value) => value < 10 ? `0${value}` : String(value);
 
 /**
  * Форматирование времени

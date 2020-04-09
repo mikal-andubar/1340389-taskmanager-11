@@ -22,20 +22,20 @@ const defaultRepeatingDays = Object.fromEntries(DAYS.map((it) => [it, false]));
  * @param {number} max
  * @return {number}
  */
-const getRandomInt = (min, max) => {
-  return min + Math.floor(Math.random() * (max - min));
-};
+const getRandomInt = (min, max) => min + Math.floor(Math.random() * (max - min));
+
+/**
+ * Возвращает случайное значение boolean
+ * @return {boolean}
+ */
+const getRandomBool = () => Math.random() > 0.5;
 
 /**
  * Возвращает случайный элемент массива
  * @param {[]} array
  * @return {*}
  */
-const getRandomArrayItem = (array) => {
-  const randomIndex = getRandomInt(0, array.length);
-
-  return array[randomIndex];
-};
+const getRandomArrayItem = (array) => array[getRandomInt(0, array.length)];
 
 /**
  * Возвращает случайную дату
@@ -44,7 +44,7 @@ const getRandomArrayItem = (array) => {
 const getRandomDate = () => {
   const targetDate = new Date();
   targetDate.setHours(getRandomInt(0, 24));
-  const sign = Math.random() > 0.5 ? 1 : -1;
+  const sign = getRandomBool() ? 1 : -1;
   const diffValue = sign * getRandomInt(0, 8);
 
   targetDate.setDate(targetDate.getDate() + diffValue);
@@ -56,24 +56,22 @@ const getRandomDate = () => {
  * Генерирует случайный набор repeatingDays
  * @return {{}}
  */
-const generateRepeatingDays = () => {
-  return Object.fromEntries(DAYS.map((it) => [it, Math.random() <= 0.2]));
-};
+const generateRepeatingDays = () => Object.fromEntries(DAYS.map((it) => [it, Math.random() <= 0.2]));
 
 /**
  * Генерирует данные для задачи
  * @return {{}}
  */
 const generateTask = () => {
-  const dueDate = Math.random() > 0.5 ? null : getRandomDate();
+  const dueDate = getRandomBool() ? null : getRandomDate();
 
   return {
     description: getRandomArrayItem(descriptionItems),
     dueDate,
     repeatingDays: dueDate ? defaultRepeatingDays : generateRepeatingDays(),
     color: getRandomArrayItem(COLORS),
-    isArchive: Math.random() > 0.5,
-    isFavorite: Math.random() > 0.5,
+    isArchive: getRandomBool(),
+    isFavorite: getRandomBool(),
   };
 };
 
@@ -82,11 +80,7 @@ const generateTask = () => {
  * @param {number} count
  * @return {[]}
  */
-const generateTasks = (count) => {
-  return new Array(count)
-    .fill(``)
-    .map(generateTask);
-};
+const generateTasks = (count) => new Array(count).fill(``).map(generateTask);
 
 
 export {generateTask, generateTasks};

@@ -28,3 +28,24 @@ export const MONTH_NAMES = [
   `November`,
   `December`,
 ];
+
+/**
+ * Возможные места для рендера
+ * @type {{}}
+ */
+export const RENDER_PLACE = {
+  BEFORE_END: `beforeend`,
+  AFTER_END: `afterend`,
+  BEFORE_BEGIN: `beforebegin`,
+  AFTER_BEGIN: `afterbegin`,
+};
+
+/**
+ * Константы, регулирующие количество отображаемых задач
+ * @type {{}}
+ */
+export const TASK_COUNT = {
+  TOTAL: 23,
+  ON_START: 8,
+  ON_BUTTON: 8,
+};

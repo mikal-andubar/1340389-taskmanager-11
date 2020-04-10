@@ -74,7 +74,7 @@ export const generateFilters = (tasks) => {
       },
       {
         name: `favorites`,
-        count: task.isFavorite ? increaseInt(favorites): favorites,
+        count: task.isFavorite ? increaseInt(favorites) : favorites,
       },
       {
         name: `repeating`,

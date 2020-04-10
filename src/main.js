@@ -1,3 +1,4 @@
+import {RENDER_PLACE, TASK_COUNT} from "./constants";
 import {createSiteMenuTemplate} from "./components/site-menu";
 import {createFiltersTemplate} from "./components/filters";
 import {createSortingTemplate} from "./components/sorting";
@@ -5,8 +6,14 @@ import {createBoardTemplate} from "./components/board";
 import {createTaskEditTemplate} from "./components/task-edit";
 import {createTaskTemplate} from "./components/task";
 import {createLoadMoreButtonTemplate} from "./components/load-more-button";
+import {generateFilters} from "./mock/filters";
+import {generateTasks} from "./mock/task";
 
-const TASK_COUNT = 3;
+/**
+ * Количество отбражаемых задач
+ * @type {number}
+ */
+let showingTasksCount = TASK_COUNT.ON_START;
 
 /**
  * Основной элемент страницы
@@ -21,20 +28,31 @@ const siteMainElement = document.querySelector(`.main`);
 const siteHeaderElement = siteMainElement.querySelector(`.main__control`);
 
 /**
+ * Задачи
+ * @type {{}[]}
+ */
+const tasks = generateTasks(TASK_COUNT.TOTAL);
+
+/**
+ * Фильтры
+ * @type {[]}
+ */
+const filters = generateFilters(tasks);
+
+/**
  * Функция рендера
  * @param {Element} container
  * @param {string} template
  * @param {"beforebegin" | "afterbegin" | "beforeend" | "afterend"} place
+ * @return {void}
  */
-const render = (container, template, place = `beforeend`) => {
-  container.insertAdjacentHTML(place, template);
-};
+const render = (container, template, place = RENDER_PLACE.BEFORE_END) => container.insertAdjacentHTML(place, template);
 
 // Отрисовка меню в шапке сайта
 render(siteHeaderElement, createSiteMenuTemplate());
 
 // Отрисовка в основной блок фильтров и шаблона списка задач
-render(siteMainElement, createFiltersTemplate());
+render(siteMainElement, createFiltersTemplate(filters));
 render(siteMainElement, createBoardTemplate());
 
 /**
@@ -50,13 +68,35 @@ const boardElement = siteMainElement.querySelector(`.board`);
 const taskListElement = boardElement.querySelector(`.board__tasks`);
 
 // Отрисовка элементов сортировки перед списком задач и редактора карточки задачи
-render(boardElement, createSortingTemplate(), `afterbegin`);
-render(taskListElement, createTaskEditTemplate());
+render(boardElement, createSortingTemplate(), RENDER_PLACE.AFTER_BEGIN);
+render(taskListElement, createTaskEditTemplate(tasks[0]));
 
 // Отрисовка самих карточек задач
-for (let i = 0; i < TASK_COUNT; i++) {
-  render(taskListElement, createTaskTemplate());
-}
+tasks.slice(1, showingTasksCount).forEach((task) => render(taskListElement, createTaskTemplate(task)));
 
 // Отрисовка кнопки "Load More"
 render(boardElement, createLoadMoreButtonTemplate());
+
+/**
+ * Кнопка "Load More"
+ * @type {Element}
+ */
+const loadMoreButton = boardElement.querySelector(`.load-more`);
+
+// Добавление обработчика события "click" к кнопке "Load More"
+loadMoreButton.addEventListener(`click`, () => {
+  /**
+   * Количество показанных задач до нажати кнопки
+   * @type {number}
+   */
+  const prevTasksCount = showingTasksCount;
+
+  showingTasksCount = showingTasksCount + TASK_COUNT.ON_BUTTON;
+
+  tasks.slice(prevTasksCount, showingTasksCount).forEach((task) => render(taskListElement, createTaskTemplate(task)));
+
+  if (showingTasksCount >= tasks.length) {
+    loadMoreButton.remove();
+  }
+});
+

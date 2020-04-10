@@ -1,17 +1,54 @@
 import {DAYS} from "../constants";
 
+const EMPTY_FILTERS = [
+  {name: `all`, count: 0},
+  {name: `overdue`, count: 0},
+  {name: `today`, count: 0},
+  {name: `favorites`, count: 0},
+  {name: `repeating`, count: 0},
+  {name: `archive`, count: 0},
+];
+
 /**
- * Стартовый объект для подсчета задач для фильтров
- * @type {{}}
+ * Прибавляет к числу numeric заданное addingValue
+ * @param {number} numeric
+ * @param {number} addingValue
+ * @return {number}
  */
-const EMPTY_FILTERS = {
-  all: 0,
-  overdue: 0,
-  today: 0,
-  favorites: 0,
-  repeating: 0,
-  archive: 0
+const increaseInt = (numeric, addingValue = 1) => numeric + addingValue;
+
+/**
+ * Проверка того, что дата просрочена
+ * @param {Date} date
+ * @return {boolean}
+ */
+const isDateExpired = (date) => date instanceof Date && date < Date.now();
+
+/**
+ * Проверка того, что задача приходится на сегодня
+ * @param {{}} task
+ * @return {boolean}
+ */
+const isTodayTask = (task) => {
+  /**
+   * Сегодняшняя дата для сравнения
+   * @type {Date}
+   */
+  const todayDate = new Date();
+
+  return (task.repeatingDays[DAYS[todayDate.getDay() - 1]])
+    || (
+      task.dueDate instanceof Date
+      && new Date(task.dueDate).setHours(0, 0, 0, 0) === todayDate.setHours(0, 0, 0, 0)
+    );
 };
+
+/**
+ * Проверка того, что задача является периодической
+ * @param {{}} task
+ * @return {boolean}
+ */
+const isRepeatingTask = (task) => Object.values(task.repeatingDays).some(Boolean);
 
 /**
  * Генератор фильтров
@@ -19,77 +56,35 @@ const EMPTY_FILTERS = {
  * @return {[]}
  */
 export const generateFilters = (tasks) => {
-  /**
-   * Количество подходящих под фильтры задач
-   * @type {{}}
-   */
-  const filterCount = tasks.reduce((count, task) => {
-    /**
-     * Проверка просроченности задачи
-     * @type {boolean}
-     */
-    const isExpired = task.dueDate instanceof Date && task.dueDate < Date.now();
+  return tasks.reduce((acc, task) => {
+    const [all, overdue, today, favorites, repeating, archive] = acc.map((it) => it.count);
 
-    /**
-     * Сегодняшняя дата для сравнения
-     * @type {Date}
-     */
-    const todayDate = new Date();
-
-    /**
-     * Проверка того, что задача приходится на сегодня
-     * @type {boolean}
-     */
-    const isToday = (task.repeatingDays[DAYS[todayDate.getDay() - 1]])
-      || (
-        task.dueDate instanceof Date
-        && task.dueDate.setHours(0, 0, 0, 0) === todayDate.setHours(0, 0, 0, 0)
-      );
-
-    /**
-     * Проверка того, что задача является периодической
-     * @type {boolean}
-     */
-    const isRepeating = Object.values(task.repeatingDays).some(Boolean);
-
-    count.all++;
-
-    if (isExpired) {
-      count.overdue++;
-    }
-
-    if (isToday) {
-      count.today++;
-    }
-
-    if (task.isFavorite) {
-      count.favorites++;
-    }
-
-    if (isRepeating) {
-      count.repeating++;
-    }
-
-    if (task.isArchive) {
-      count.archive++;
-    }
-
-    return count;
+    return [
+      {
+        name: `all`,
+        count: increaseInt(all),
+      },
+      {
+        name: `overdue`,
+        count: isDateExpired(task.dueDate) ? increaseInt(overdue) : overdue,
+      },
+      {
+        name: `today`,
+        count: isTodayTask(task) ? increaseInt(today) : today,
+      },
+      {
+        name: `favorites`,
+        count: task.isFavorite ? increaseInt(favorites): favorites,
+      },
+      {
+        name: `repeating`,
+        count: isRepeatingTask(task) ? increaseInt(repeating) : repeating,
+      },
+      {
+        name: `archive`,
+        count: task.isArchive ? increaseInt(archive) : archive,
+      },
+    ];
   }, EMPTY_FILTERS);
-
-  /**
-   * Итоговый массив фильтров
-   * @type {*[]}
-   */
-  const filters = [];
-  for (let value of Object.entries(filterCount)) {
-    const filter = {
-      name: value[0],
-      count: value[1],
-    };
-    filters.push(filter);
-  }
-  return filters;
-
 };
 

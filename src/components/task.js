@@ -1,12 +1,12 @@
 import {MONTH_NAMES} from "../constants";
-import {formatTime} from "../utils";
+import {createElement, formatTime} from "../utils";
 
 /**
  * Создает шаблон карточки задачи
  * @param {{}} task
  * @return {string}
  */
-export const createTaskTemplate = (task) => {
+const createTaskTemplate = (task) => {
   const {color, description, dueDate, repeatingDays, isArchive, isFavorite} = task;
 
   const isExpired = dueDate instanceof Date && dueDate < Date.now();
@@ -68,4 +68,44 @@ export const createTaskTemplate = (task) => {
   );
 };
 
+/**
+ * Класс для карточки задачи
+ */
+export default class Task {
+  /**
+   * Конструктор класса
+   * @param {{}} task
+   */
+  constructor(task) {
+    this._task = task;
+    this._element = null;
+  }
+
+  /**
+   * Возвращает шаблон задачи
+   * @return {string}
+   */
+  getTemplate() {
+    return createTaskTemplate(this._task);
+  }
+
+  /**
+   * Возвращает элемент DOM
+   * @return {null}
+   */
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  /**
+   * Очищает элемент DOM
+   */
+  removeElement() {
+    this._element = null;
+  }
+}
 

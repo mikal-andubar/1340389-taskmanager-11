@@ -1,8 +1,10 @@
+import {createElement} from "../utils";
+
 /**
  * Создание шаблона меню сайта
  * @return {string}
  */
-export const createSiteMenuTemplate = () => (
+const createSiteMenuTemplate = () => (
   `<section class="control__btn-wrap">
     <input
       type="radio"
@@ -28,3 +30,43 @@ export const createSiteMenuTemplate = () => (
     <label for="control__statistic" class="control__label">STATISTICS</label>
   </section>`
 );
+
+/**
+ * Класс для меню сайта
+ */
+export default class SiteMenu {
+  /**
+   * Конструктор класса
+   */
+  constructor() {
+    this._element = null;
+  }
+
+
+  /**
+   * Возвращает шаблон задачи
+   * @return {string}
+   */
+  getTemplate() {
+    return createSiteMenuTemplate();
+  }
+
+  /**
+   * Возвращает элемент DOM
+   * @return {null}
+   */
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  /**
+   * Очищает элемент DOM
+   */
+  removeElement() {
+    this._element = null;
+  }
+}

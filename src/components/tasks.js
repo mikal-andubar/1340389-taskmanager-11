@@ -1,15 +1,15 @@
 import {createElement} from "../utils";
 
 /**
- * Создание шаблона доски задач
+ * Создает шаблон для списка задач
  * @return {string}
  */
-const createBoardTemplate = () => `<section class="board container"></section>`;
+const createTasksTemplate = () => `<div class="board__tasks"></div>`;
 
 /**
- * Класс для доски задач
+ * Класс для списка задач
  */
-export default class Board {
+export default class Tasks {
   /**
    * Конструктор класса
    */
@@ -17,12 +17,13 @@ export default class Board {
     this._element = null;
   }
 
+
   /**
-   * Возвращает шаблон доски задач
+   * Возвращает шаблон задачи
    * @return {string}
    */
   getTemplate() {
-    return createBoardTemplate();
+    return createTasksTemplate();
   }
 
   /**

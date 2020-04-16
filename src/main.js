@@ -69,6 +69,11 @@ const renderTask = (taskListElement, task) => {
   render(taskListElement, taskComponent.getElement());
 };
 
+/**
+ * Отрисовка доски задач
+ * @param {Board} boardComponent
+ * @param {[]} taskCards
+ */
 const renderBoard = (boardComponent, taskCards) => {
   /**
    * Обработчик события клика по кнопке "Load More"
@@ -97,7 +102,7 @@ const renderBoard = (boardComponent, taskCards) => {
    */
   const taskListElement = boardComponent.getElement().querySelector(`.board__tasks`);
 
-  // Реднер первых карточек
+  // Рендер первых карточек
   let showingTasksCount = TASK_COUNT.ON_START;
   taskCards.slice(0, showingTasksCount).forEach(
       (task) => renderTask(taskListElement, task)

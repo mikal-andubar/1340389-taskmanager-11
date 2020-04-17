@@ -1,4 +1,3 @@
-import {TASK_COUNT} from "./constants";
 import SiteMenuComponent from "./components/site-menu";
 import FilterComponent from "./components/filters";
 import SortComponent from "./components/sort";
@@ -6,10 +5,14 @@ import BoardComponent from "./components/board";
 import TaskEditComponent from "./components/task-edit";
 import TaskComponent from "./components/task";
 import TasksComponent from "./components/tasks";
+import NoTasksComponent from "./components/no-tasks";
 import LoadMoreButtonComponent from "./components/load-more-button";
+
 import {generateFilters} from "./mock/filters";
 import {generateTasks} from "./mock/task";
 import {render} from "./utils";
+
+import {TASK_COUNT} from "./constants";
 
 /**
  * Основной элемент страницы
@@ -42,19 +45,48 @@ const filters = generateFilters(tasks);
  */
 const renderTask = (taskListElement, task) => {
   /**
-   * Обработчик события клика по кнопке "Edit"
+   * Меняет карточку задачи на карточку редактирования
    */
-  const onEditButtonClick = () => {
+  const replaceTaskToEdit = () => {
     taskListElement.replaceChild(taskEditComponent.getElement(), taskComponent.getElement());
   };
 
   /**
-   * Обработчик события отправки формы
-   * @param {Event} evt
+   * Меняет карточку редактирования на карточку задачи
    */
-  const onEditFormSubmit = (evt) => {
-    evt.preventDefault();
+  const replaceEditToTask = () => {
     taskListElement.replaceChild(taskComponent.getElement(), taskEditComponent.getElement());
+  };
+
+  /**
+   * Обработчик события нажатия на кнопку ESC
+   * @param {KeyboardEvent} event
+   */
+  const onEscKeyDown = (event) => {
+    const isEscKey = event.key === `Escape` || event.key === `Esc`;
+
+    if (isEscKey) {
+      replaceEditToTask();
+      document.removeEventListener(`keydown`, onEscKeyDown);
+    }
+  };
+
+  /**
+   * Обработчик события клика по кнопке "Edit"
+   */
+  const onEditButtonClick = () => {
+    replaceTaskToEdit();
+    document.addEventListener(`keydown`, onEscKeyDown);
+  };
+
+  /**
+   * Обработчик события отправки формы
+   * @param {Event} event
+   */
+  const onEditFormSubmit = (event) => {
+    event.preventDefault();
+    replaceEditToTask();
+    document.removeEventListener(`keydown`, onEscKeyDown);
   };
 
   const taskComponent = new TaskComponent(task);
@@ -69,6 +101,11 @@ const renderTask = (taskListElement, task) => {
   render(taskListElement, taskComponent.getElement());
 };
 
+/**
+ * Отрисовка доски задач
+ * @param {Board} boardComponent
+ * @param {[]} taskCards
+ */
 const renderBoard = (boardComponent, taskCards) => {
   /**
    * Обработчик события клика по кнопке "Load More"
@@ -87,6 +124,17 @@ const renderBoard = (boardComponent, taskCards) => {
     }
   };
 
+  /**
+   * Проверка, что задач нет или все в архиве
+   * @type {boolean}
+   */
+  const isAllTasksArchived = tasks.every((task) => task.isArchive);
+
+  if (isAllTasksArchived) {
+    render(boardComponent.getElement(), new NoTasksComponent().getElement());
+    return;
+  }
+
   // Рендер элементов сортировки и шаблона для списка задач
   render(boardComponent.getElement(), new SortComponent().getElement());
   render(boardComponent.getElement(), new TasksComponent().getElement());
@@ -97,7 +145,7 @@ const renderBoard = (boardComponent, taskCards) => {
    */
   const taskListElement = boardComponent.getElement().querySelector(`.board__tasks`);
 
-  // Реднер первых карточек
+  // Рендер первых карточек
   let showingTasksCount = TASK_COUNT.ON_START;
   taskCards.slice(0, showingTasksCount).forEach(
       (task) => renderTask(taskListElement, task)

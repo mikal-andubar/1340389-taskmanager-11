@@ -1,5 +1,8 @@
+import AbstractComponent from "./abstract-component";
+
+import {formatTime} from "../utils/common";
+
 import {COLORS, DAYS, MONTH_NAMES} from "../constants";
-import {createElement, formatTime} from "../utils";
 
 /**
  * Создает разметку для списка цветов
@@ -144,16 +147,16 @@ const createTaskEditTemplate = (task) => {
 /**
  * Класс для редактора карточки задачи
  */
-export default class TaskEdit {
+export default class TaskEdit extends AbstractComponent {
   /**
    * Конструктор класса
    * @param {{}} task
    */
   constructor(task) {
-    this._task = task;
-    this._element = null;
-  }
+    super();
 
+    this._task = task;
+  }
 
   /**
    * Возвращает шаблон задачи
@@ -164,21 +167,10 @@ export default class TaskEdit {
   }
 
   /**
-   * Возвращает элемент DOM
-   * @return {null}
+   * Добавляет обработчик события отправки формы редактирования
+   * @param {function} handler
    */
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  /**
-   * Очищает элемент DOM
-   */
-  removeElement() {
-    this._element = null;
+  setSubmitHandler(handler) {
+    this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
   }
 }

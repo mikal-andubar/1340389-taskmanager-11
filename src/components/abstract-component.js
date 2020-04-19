@@ -17,9 +17,14 @@ export default class AbstractComponent {
 
   /**
    * Абстрактный метод, который требует переопределения в классе-потомке
+   * @return {string}
    */
   getTemplate() {
-    throw new Error(`Abstract method not implemented: getTemplate`);
+    if (this instanceof AbstractComponent) {
+      throw new Error(`Abstract method not implemented: getTemplate`);
+    }
+
+    return ``;
   }
 
   /**

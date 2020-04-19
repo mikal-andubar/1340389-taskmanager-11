@@ -7,7 +7,7 @@ import LoadMoreButtonComponent from "../components/load-more-button";
 
 import {remove, render, replace} from "../utils/render";
 
-import {TASK_COUNT} from "../constants";
+import {KEY_CODE, TASK_COUNT} from "../constants";
 
 /**
  * Отрисовка карточки задачи
@@ -16,28 +16,14 @@ import {TASK_COUNT} from "../constants";
  */
 const renderTask = (taskListElement, task) => {
   /**
-   * Меняет карточку задачи на карточку редактирования
-   */
-  const replaceTaskToEdit = () => {
-    replace(taskEditComponent, taskComponent);
-  };
-
-  /**
-   * Меняет карточку редактирования на карточку задачи
-   */
-  const replaceEditToTask = () => {
-    replace(taskComponent, taskEditComponent);
-  };
-
-  /**
    * Обработчик события нажатия на кнопку ESC
    * @param {KeyboardEvent} event
    */
   const onEscKeyDown = (event) => {
-    const isEscKey = event.key === `Escape` || event.key === `Esc`;
+    const isEscKey = event.key === KEY_CODE.ESCAPE || event.key === KEY_CODE.ESC;
 
     if (isEscKey) {
-      replaceEditToTask();
+      replace(taskComponent, taskEditComponent);
       document.removeEventListener(`keydown`, onEscKeyDown);
     }
   };
@@ -46,7 +32,7 @@ const renderTask = (taskListElement, task) => {
    * Обработчик события клика по кнопке "Edit"
    */
   const onEditButtonClick = () => {
-    replaceTaskToEdit();
+    replace(taskEditComponent, taskComponent);
     document.addEventListener(`keydown`, onEscKeyDown);
   };
 
@@ -56,7 +42,7 @@ const renderTask = (taskListElement, task) => {
    */
   const onEditFormSubmit = (event) => {
     event.preventDefault();
-    replaceEditToTask();
+    replace(taskComponent, taskEditComponent);
     document.removeEventListener(`keydown`, onEscKeyDown);
   };
 

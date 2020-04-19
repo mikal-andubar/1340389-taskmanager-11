@@ -30,23 +30,22 @@ const createColorsMarkup = (colors, currentColor) => (
 
 /**
  * Создает разметку для списка дней недели
- * @param {[]} days
- * @param {{}} repeatingDays
+ * @param {{}} task
  * @return {string}
  */
-const createRepeatingDaysMarkup = (days, repeatingDays) => (
-  days.map((day, index) => {
+const createRepeatingDaysMarkup = ({id, repeatingDays}) => (
+  DAYS.map((day, index) => {
     const isChecked = repeatingDays[day];
     return (
       `<input
         class="visually-hidden card__repeat-day-input"
         type="checkbox"
-        id="repeat-${day}-${index}"
+        id="repeat-${id}-${day}-${index}"
         name="repeat"
         value="${day}"
         ${isChecked ? `checked` : ``}
       />
-      <label class="card__repeat-day" for="repeat-${day}-${index}">${day}</label>`
+      <label class="card__repeat-day" for="repeat-${id}-${day}-${index}">${day}</label>`
     );
   }).join(`\n`)
 );
@@ -70,7 +69,7 @@ const createTaskEditTemplate = (task) => {
   const deadlineClass = isExpired ? `card--deadline` : ``;
 
   const colorsMarkup = createColorsMarkup(COLORS, color);
-  const repeatingDaysMarkup = createRepeatingDaysMarkup(DAYS, repeatingDays);
+  const repeatingDaysMarkup = createRepeatingDaysMarkup(task);
 
   return (
     `<article class="card card--edit card--${color} ${repeatClass} ${deadlineClass}">

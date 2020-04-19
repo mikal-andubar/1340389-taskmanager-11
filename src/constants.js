@@ -49,3 +49,12 @@ export const TASK_COUNT = {
   ON_START: 8,
   ON_BUTTON: 8,
 };
+
+/**
+ * Коды нажатых клавиш для обработки событий
+ * @type {{}}
+ */
+export const KEY_CODE = {
+  ESCAPE: `Esc`,
+  ESC: `Escape`,
+};

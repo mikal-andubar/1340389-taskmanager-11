@@ -59,12 +59,15 @@ const generateRepeatingDays = () => Object.fromEntries(DAYS.map((it) => [it, Mat
 
 /**
  * Генерирует данные для задачи
+ * @param {any} task
+ * @param {number} id
  * @return {{}}
  */
-const generateTask = () => {
+const generateTask = (task, id) => {
   const dueDate = getRandomBool() ? null : getRandomDate();
 
   return {
+    id,
     description: getRandomArrayItem(descriptionItems),
     dueDate,
     repeatingDays: dueDate ? defaultRepeatingDays : generateRepeatingDays(),
@@ -81,4 +84,4 @@ const generateTask = () => {
  */
 const generateTasks = (count) => new Array(count).fill(``).map(generateTask);
 
-export {generateTask, generateTasks};
+export {generateTasks};

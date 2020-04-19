@@ -1,4 +1,4 @@
-import {createElement} from "../utils";
+import AbstractComponent from "./abstract-component";
 
 /**
  * Создание шаблона кнопки "Load More"
@@ -9,14 +9,7 @@ const createLoadMoreButtonTemplate = () => `<button class="load-more" type="butt
 /**
  * Класс для кнопки "Load More"
  */
-export default class LoadMoreButton {
-  /**
-   * Конструктор класса
-   */
-  constructor() {
-    this._element = null;
-  }
-
+export default class LoadMoreButton extends AbstractComponent {
   /**
    * Возвращает шаблон задачи
    * @return {string}
@@ -26,21 +19,10 @@ export default class LoadMoreButton {
   }
 
   /**
-   * Возвращает элемент DOM
-   * @return {null}
+   * Добавляет обработчик для события клика
+   * @param {function} handler
    */
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  /**
-   * Очищает элемент DOM
-   */
-  removeElement() {
-    this._element = null;
+  setClickHandler(handler) {
+    this.getElement().addEventListener(`click`, handler);
   }
 }

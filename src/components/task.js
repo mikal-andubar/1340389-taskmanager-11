@@ -1,5 +1,8 @@
+import AbstractComponent from "./abstract-component";
+
+import {formatTime} from "../utils/common";
+
 import {MONTH_NAMES} from "../constants";
-import {createElement, formatTime} from "../utils";
 
 /**
  * Создает шаблон карточки задачи
@@ -71,14 +74,15 @@ const createTaskTemplate = (task) => {
 /**
  * Класс для карточки задачи
  */
-export default class Task {
+export default class Task extends AbstractComponent {
   /**
    * Конструктор класса
    * @param {{}} task
    */
   constructor(task) {
+    super();
+
     this._task = task;
-    this._element = null;
   }
 
   /**
@@ -90,22 +94,11 @@ export default class Task {
   }
 
   /**
-   * Возвращает элемент DOM
-   * @return {null}
+   * Добавляет обработчик события клика на кнопку EDIT
+   * @param {function} handler
    */
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  /**
-   * Очищает элемент DOM
-   */
-  removeElement() {
-    this._element = null;
+  setEditButtonClickHandler(handler) {
+    this.getElement().querySelector(`.card__btn--edit`).addEventListener(`click`, handler);
   }
 }
 

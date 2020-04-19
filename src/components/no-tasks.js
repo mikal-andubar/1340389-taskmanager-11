@@ -1,4 +1,4 @@
-import {createElement} from "../utils";
+import AbstractComponent from "./abstract-component";
 
 /**
  * Создает шаблон пустого списка
@@ -13,38 +13,12 @@ const createNoTasksTemplate = () => (
 /**
  * Класс для пустого списка задач
  */
-export default class NoTasks {
-  /**
-   * Конструктор класса
-   */
-  constructor() {
-    this._element = null;
-  }
-
+export default class NoTasks extends AbstractComponent {
   /**
    * Возвращает шаблон пустого списка задач
    * @return {string}
    */
   getTemplate() {
     return createNoTasksTemplate();
-  }
-
-  /**
-   * Возвращает элемент DOM
-   * @return {null}
-   */
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  /**
-   * Очищает элемент DOM
-   */
-  removeElement() {
-    this._element = null;
   }
 }

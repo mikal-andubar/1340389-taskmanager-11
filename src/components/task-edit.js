@@ -1,5 +1,8 @@
+import AbstractComponent from "./abstract-component";
+
+import {formatTime} from "../utils/common";
+
 import {COLORS, DAYS, MONTH_NAMES} from "../constants";
-import {createElement, formatTime} from "../utils";
 
 /**
  * Создает разметку для списка цветов
@@ -27,23 +30,22 @@ const createColorsMarkup = (colors, currentColor) => (
 
 /**
  * Создает разметку для списка дней недели
- * @param {[]} days
- * @param {{}} repeatingDays
+ * @param {{}} task
  * @return {string}
  */
-const createRepeatingDaysMarkup = (days, repeatingDays) => (
-  days.map((day, index) => {
+const createRepeatingDaysMarkup = ({id, repeatingDays}) => (
+  DAYS.map((day, index) => {
     const isChecked = repeatingDays[day];
     return (
       `<input
         class="visually-hidden card__repeat-day-input"
         type="checkbox"
-        id="repeat-${day}-${index}"
+        id="repeat-${id}-${day}-${index}"
         name="repeat"
         value="${day}"
         ${isChecked ? `checked` : ``}
       />
-      <label class="card__repeat-day" for="repeat-${day}-${index}">${day}</label>`
+      <label class="card__repeat-day" for="repeat-${id}-${day}-${index}">${day}</label>`
     );
   }).join(`\n`)
 );
@@ -67,7 +69,7 @@ const createTaskEditTemplate = (task) => {
   const deadlineClass = isExpired ? `card--deadline` : ``;
 
   const colorsMarkup = createColorsMarkup(COLORS, color);
-  const repeatingDaysMarkup = createRepeatingDaysMarkup(DAYS, repeatingDays);
+  const repeatingDaysMarkup = createRepeatingDaysMarkup(task);
 
   return (
     `<article class="card card--edit card--${color} ${repeatClass} ${deadlineClass}">
@@ -144,16 +146,16 @@ const createTaskEditTemplate = (task) => {
 /**
  * Класс для редактора карточки задачи
  */
-export default class TaskEdit {
+export default class TaskEdit extends AbstractComponent {
   /**
    * Конструктор класса
    * @param {{}} task
    */
   constructor(task) {
-    this._task = task;
-    this._element = null;
-  }
+    super();
 
+    this._task = task;
+  }
 
   /**
    * Возвращает шаблон задачи
@@ -164,21 +166,10 @@ export default class TaskEdit {
   }
 
   /**
-   * Возвращает элемент DOM
-   * @return {null}
+   * Добавляет обработчик события отправки формы редактирования
+   * @param {function} handler
    */
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  /**
-   * Очищает элемент DOM
-   */
-  removeElement() {
-    this._element = null;
+  setSubmitHandler(handler) {
+    this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
   }
 }

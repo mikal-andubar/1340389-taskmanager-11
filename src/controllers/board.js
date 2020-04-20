@@ -1,7 +1,7 @@
 import TaskComponent from "../components/task";
 import TaskEditComponent from "../components/task-edit";
 import NoTasksComponent from "../components/no-tasks";
-import SortComponent from "../components/sort";
+import SortComponent, {SortType} from "../components/sort";
 import TasksComponent from "../components/tasks";
 import LoadMoreButtonComponent from "../components/load-more-button";
 
@@ -56,6 +56,43 @@ const renderTask = (taskListElement, task) => {
   render(taskListElement, taskComponent);
 };
 
+/**
+ * Рендер списка задач
+ * @param {Element} taskListElement
+ * @param {{}[]} tasks
+ */
+const renderTasks = (taskListElement, tasks) => {
+  tasks.forEach((task) => {
+    renderTask(taskListElement, task);
+  });
+};
+
+/**
+ * Возвращает отсортированный массив задач
+ * @param {{}[]}tasks
+ * @param {string} sortType
+ * @param {number} from
+ * @param {number} to
+ * @return {*[]}
+ */
+const getSortedTasks = (tasks, sortType, from, to) => {
+  let sortedTasks = [];
+  const showingTasks = tasks.slice();
+
+  switch (sortType) {
+    case SortType.DATE_UP:
+      sortedTasks = showingTasks.sort((a, b) => a.dueDate - b.dueDate);
+      break;
+    case SortType.DATE_DOWN:
+      sortedTasks = showingTasks.sort((a, b) => b.dueDate - a.dueDate);
+      break;
+    case SortType.DEFAULT:
+      sortedTasks = showingTasks;
+      break;
+  }
+
+  return sortedTasks.slice(from, to);
+};
 
 /**
  * Класс контроллера для работы с доской задач
@@ -85,13 +122,27 @@ export default class BoardController {
       const prevTaskCount = showingTasksCount;
       showingTasksCount = showingTasksCount + TASK_COUNT.ON_BUTTON;
 
-      tasks.slice(prevTaskCount, showingTasksCount).forEach(
-          (task) => renderTask(taskListElement, task)
-      );
+      const sortedTasks = getSortedTasks(tasks, this._sortComponent.getSortType(), prevTaskCount, showingTasksCount);
+      renderTasks(taskListElement, sortedTasks);
 
       if (showingTasksCount >= tasks.length) {
         remove(this._loadMoreButtonComponent);
       }
+    };
+
+    /**
+     * Рендер кнопки "Load More"
+     */
+    const renderLoadMoreButton = () => {
+      if (showingTasksCount >= tasks.length) {
+        return;
+      }
+
+      // Рендер кнопки "Load More"
+      render(container, this._loadMoreButtonComponent);
+
+      // Добавляем к кнопе "Load More" обработчик события клика
+      this._loadMoreButtonComponent.setClickHandler(onLoadMoreButtonClick);
     };
 
     /**
@@ -122,14 +173,20 @@ export default class BoardController {
 
     // Рендер первых карточек
     let showingTasksCount = TASK_COUNT.ON_START;
-    tasks.slice(0, showingTasksCount).forEach(
-        (task) => renderTask(taskListElement, task)
-    );
 
-    // Рендер кнопки "Load More"
-    render(container, this._loadMoreButtonComponent);
+    renderTasks(taskListElement, tasks.slice(0, showingTasksCount));
+    renderLoadMoreButton();
 
-    // Добавляем к кнопе "Load More" обработчик события клика
-    this._loadMoreButtonComponent.setClickHandler(onLoadMoreButtonClick);
+    // Добавляем обработку события смены вида сортировки
+    this._sortComponent.setSortTypeChangeHandler((sortType) => {
+      showingTasksCount = TASK_COUNT.ON_START;
+
+      const sortedTasks = getSortedTasks(tasks, sortType, 0, showingTasksCount);
+
+      taskListElement.innerHTML = ``;
+
+      renderTasks(taskListElement, sortedTasks);
+      renderLoadMoreButton();
+    });
   }
 }

@@ -61,13 +61,9 @@ export default class Sort extends AbstractComponent {
     this.getElement().addEventListener(`click`, (event) => {
       event.preventDefault();
 
-      if (event.target.tagName !== `A`) {
-        return;
-      }
-
       const sortType = event.target.dataset.sortType;
 
-      if (this._currentSortType === sortType) {
+      if (!sortType || this._currentSortType === sortType) {
         return;
       }
 

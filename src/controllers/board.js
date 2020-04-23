@@ -1,70 +1,48 @@
-import TaskComponent from "../components/task";
-import TaskEditComponent from "../components/task-edit";
 import NoTasksComponent from "../components/no-tasks";
 import SortComponent, {SortType} from "../components/sort";
 import TasksComponent from "../components/tasks";
 import LoadMoreButtonComponent from "../components/load-more-button";
 
-import {remove, render, replace} from "../utils/render";
+import TaskController from "./task";
 
-import {KEY_CODE, TASK_COUNT} from "../constants";
+import {componentRender, remove} from "../utils/render";
 
-/**
- * Отрисовка карточки задачи
- * @param {Element} taskListElement
- * @param {{}} task
- */
-const renderTask = (taskListElement, task) => {
-  /**
-   * Обработчик события нажатия на кнопку ESC
-   * @param {KeyboardEvent} event
-   */
-  const onEscKeyDown = (event) => {
-    const isEscKey = event.key === KEY_CODE.ESCAPE || event.key === KEY_CODE.ESC;
-
-    if (isEscKey) {
-      replace(taskComponent, taskEditComponent);
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    }
-  };
-
-  /**
-   * Обработчик события клика по кнопке "Edit"
-   */
-  const onEditButtonClick = () => {
-    replace(taskEditComponent, taskComponent);
-    document.addEventListener(`keydown`, onEscKeyDown);
-  };
-
-  /**
-   * Обработчик события отправки формы
-   * @param {Event} event
-   */
-  const onEditFormSubmit = (event) => {
-    event.preventDefault();
-    replace(taskComponent, taskEditComponent);
-    document.removeEventListener(`keydown`, onEscKeyDown);
-  };
-
-  const taskComponent = new TaskComponent(task);
-  taskComponent.setEditButtonClickHandler(onEditButtonClick);
-
-  const taskEditComponent = new TaskEditComponent(task);
-  taskEditComponent.setSubmitHandler(onEditFormSubmit);
-
-  // Рендер карточки задачи
-  render(taskListElement, taskComponent);
-};
+import {TASK_COUNT} from "../constants";
 
 /**
  * Рендер списка задач
  * @param {Element} taskListElement
  * @param {{}[]} tasks
+ * @param {function} onDataChange
+ * @param {function} onViewChange
+ * @return {TaskController[]}
  */
-const renderTasks = (taskListElement, tasks) => {
-  tasks.forEach((task) => {
-    renderTask(taskListElement, task);
+const renderTasks = (taskListElement, tasks, onDataChange, onViewChange) => {
+  return tasks.map((task) => {
+    const taskController = new TaskController(taskListElement, onDataChange, onViewChange);
+
+    taskController.render(task);
+
+    return taskController;
   });
+};
+
+/**
+ * Возвращает массив задач, отсортированный в соответствии с видом сортировки
+ * @param {{}[]} tasks
+ * @param {string} sortType
+ * @return {{}[]}
+ */
+const getSortedTasksBySortType = (tasks, sortType) => {
+  const showingTasks = tasks.slice();
+  switch (sortType) {
+    case SortType.DATE_UP:
+      return showingTasks.sort((a, b) => a.dueDate - b.dueDate);
+    case SortType.DATE_DOWN:
+      return showingTasks.sort((a, b) => b.dueDate - a.dueDate);
+    default:
+      return showingTasks;
+  }
 };
 
 /**
@@ -76,22 +54,7 @@ const renderTasks = (taskListElement, tasks) => {
  * @return {*[]}
  */
 const getSortedTasks = (tasks, sortType, from, to) => {
-  let sortedTasks = [];
-  const showingTasks = tasks.slice();
-
-  switch (sortType) {
-    case SortType.DATE_UP:
-      sortedTasks = showingTasks.sort((a, b) => a.dueDate - b.dueDate);
-      break;
-    case SortType.DATE_DOWN:
-      sortedTasks = showingTasks.sort((a, b) => b.dueDate - a.dueDate);
-      break;
-    case SortType.DEFAULT:
-      sortedTasks = showingTasks;
-      break;
-  }
-
-  return sortedTasks.slice(from, to);
+  return getSortedTasksBySortType(tasks, sortType).slice(from, to);
 };
 
 /**
@@ -104,10 +67,22 @@ export default class BoardController {
    */
   constructor(container) {
     this._container = container;
+
+    this._tasks = [];
+    this._showedTaskControllers = [];
+    this._showingTasksCount = TASK_COUNT.ON_START;
     this._noTasksComponent = new NoTasksComponent();
     this._sortComponent = new SortComponent();
     this._tasksComponent = new TasksComponent();
     this._loadMoreButtonComponent = new LoadMoreButtonComponent();
+
+    this._onSortTypeChange = this._onSortTypeChange.bind(this);
+    this._onDataChange = this._onDataChange.bind(this);
+    this._onViewChange = this._onViewChange.bind(this);
+
+    this._sortComponent.setSortTypeChangeHandler(this._onSortTypeChange);
+
+    this._showLoadMoreBtn = false;
   }
 
   /**
@@ -115,35 +90,7 @@ export default class BoardController {
    * @param {[]} tasks
    */
   render(tasks) {
-    /**
-     * Обработчик события клика по кнопке "Load More"
-     */
-    const onLoadMoreButtonClick = () => {
-      const prevTaskCount = showingTasksCount;
-      showingTasksCount = showingTasksCount + TASK_COUNT.ON_BUTTON;
-
-      const sortedTasks = getSortedTasks(tasks, this._sortComponent.getSortType(), prevTaskCount, showingTasksCount);
-      renderTasks(taskListElement, sortedTasks);
-
-      if (showingTasksCount >= tasks.length) {
-        remove(this._loadMoreButtonComponent);
-      }
-    };
-
-    /**
-     * Рендер кнопки "Load More"
-     */
-    const renderLoadMoreButton = () => {
-      if (showingTasksCount >= tasks.length) {
-        return;
-      }
-
-      // Рендер кнопки "Load More"
-      render(container, this._loadMoreButtonComponent);
-
-      // Добавляем к кнопе "Load More" обработчик события клика
-      this._loadMoreButtonComponent.setClickHandler(onLoadMoreButtonClick);
-    };
+    this._tasks = tasks;
 
     /**
      * Контейнер, в который будем рендерить все
@@ -154,16 +101,16 @@ export default class BoardController {
      * Проверка, что задач нет или все в архиве
      * @type {boolean}
      */
-    const isAllTasksArchived = tasks.every((task) => task.isArchive);
+    const isAllTasksArchived = this._tasks.every((task) => task.isArchive);
 
     if (isAllTasksArchived) {
-      render(container, this._noTasksComponent);
+      componentRender(container, this._noTasksComponent);
       return;
     }
 
     // Рендер элементов сортировки и шаблона для списка задач
-    render(container, this._sortComponent);
-    render(container, this._tasksComponent);
+    componentRender(container, this._sortComponent);
+    componentRender(container, this._tasksComponent);
 
     /**
      * Контейнер для списка задач
@@ -172,21 +119,91 @@ export default class BoardController {
     const taskListElement = this._tasksComponent.getElement();
 
     // Рендер первых карточек
-    let showingTasksCount = TASK_COUNT.ON_START;
+    const newTasks = renderTasks(taskListElement, this._tasks.slice(0, this._showingTasksCount), this._onDataChange, this._onViewChange);
+    this._showedTaskControllers = this._showedTaskControllers.concat(newTasks);
 
-    renderTasks(taskListElement, tasks.slice(0, showingTasksCount));
-    renderLoadMoreButton();
+    this._renderLoadMoreButton();
+  }
 
-    // Добавляем обработку события смены вида сортировки
-    this._sortComponent.setSortTypeChangeHandler((sortType) => {
-      showingTasksCount = TASK_COUNT.ON_START;
+  /**
+   * Рендер кнопки "Load More"
+   */
+  _renderLoadMoreButton() {
+    /**
+     * Обработчик события клика по кнопке "Load More"
+     */
+    const onLoadMoreButtonClick = () => {
+      const prevTaskCount = this._showingTasksCount;
+      const taskListElement = this._tasksComponent.getElement();
+      this._showingTasksCount = this._showingTasksCount + TASK_COUNT.ON_BUTTON;
 
-      const sortedTasks = getSortedTasks(tasks, sortType, 0, showingTasksCount);
+      const sortedTasks = getSortedTasks(this._tasks, this._sortComponent.getSortType(), prevTaskCount, this._showingTasksCount);
+      const newTasks = renderTasks(taskListElement, sortedTasks, this._onDataChange, this._onViewChange);
+      this._showedTaskControllers = this._showedTaskControllers.concat(newTasks);
 
-      taskListElement.innerHTML = ``;
+      if (this._showingTasksCount >= this._tasks.length) {
+        remove(this._loadMoreButtonComponent);
+        this._showLoadMoreBtn = false;
+      }
+    };
 
-      renderTasks(taskListElement, sortedTasks);
-      renderLoadMoreButton();
-    });
+    if (this._showingTasksCount >= this._tasks.length) {
+      return;
+    }
+
+    // Рендер кнопки "Load More"
+    componentRender(this._container.getElement(), this._loadMoreButtonComponent);
+
+    // Добавляем к кнопе "Load More" обработчик события клика
+    this._loadMoreButtonComponent.setClickHandler(onLoadMoreButtonClick);
+
+    this._showLoadMoreBtn = true;
+  }
+
+  /**
+   * Обработчик изменения данных задачи
+   * @param {TaskController} taskController
+   * @param {{}} oldData
+   * @param {{}} newData
+   * @private
+   */
+  _onDataChange(taskController, oldData, newData) {
+    const index = this._tasks.findIndex((it) => it === oldData);
+
+    if (index === -1) {
+      return;
+    }
+
+    this._tasks = [].concat(this._tasks.slice(0, index), newData, this._tasks.slice(index + 1));
+
+    taskController.render(this._tasks[index]);
+  }
+
+  /**
+   * Обработчик события смены вида карточки
+   * @private
+   */
+  _onViewChange() {
+    this._showedTaskControllers.forEach((it) => it.setDefaultView());
+  }
+
+  /**
+   * Обработчик события смены вида сортировки
+   * @param {string} sortType
+   * @private
+   */
+  _onSortTypeChange(sortType) {
+    this._showingTasksCount = TASK_COUNT.ON_START;
+
+    const sortedTasks = getSortedTasks(this._tasks, sortType, 0, this._showingTasksCount);
+
+    const taskListElement = this._tasksComponent.getElement();
+    taskListElement.innerHTML = ``;
+
+    this._showedTaskControllers = renderTasks(taskListElement, sortedTasks, this._onDataChange, this._onViewChange);
+
+    if (!this._showLoadMoreBtn) {
+      this._renderLoadMoreButton();
+    }
   }
 }

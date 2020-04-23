@@ -5,6 +5,21 @@ import {formatTime} from "../utils/common";
 import {MONTH_NAMES} from "../constants";
 
 /**
+ * Создает шаблон кнопки на карточке
+ * @param {string} name
+ * @param {boolean} isActive
+ * @return {string}
+ */
+const createButtonMarkup = (name, isActive = true) => (
+  `<button
+    type="button"
+    class="card__btn card__btn--${name} ${isActive ? `` : `card__btn--disabled`}"
+  >
+    ${name}
+  </button>`
+);
+
+/**
  * Создает шаблон карточки задачи
  * @param {{}} task
  * @return {string}
@@ -18,29 +33,21 @@ const createTaskTemplate = (task) => {
   const date = isDateShowing ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
   const time = isDateShowing ? formatTime(dueDate) : ``;
 
+  const editButton = createButtonMarkup(`edit`);
+  const archiveButton = createButtonMarkup(`archive`, isArchive);
+  const favoriteButton = createButtonMarkup(`favorites`, isFavorite);
+
   const repeatClass = Object.values(repeatingDays).some(Boolean) ? `card--repeat` : ``;
   const deadlineClass = isExpired ? `card--deadline` : ``;
-
-  const archiveButtonInactiveClass = isArchive ? `` : `card__btn--disabled`;
-  const favoriteButtonInactiveClass = isFavorite ? `` : `card__btn--disabled`;
 
   return (
     `<article class="card card--${color} ${repeatClass} ${deadlineClass}">
       <div class="card__form">
         <div class="card__inner">
           <div class="card__control">
-            <button type="button" class="card__btn card__btn--edit">
-              edit
-            </button>
-            <button type="button" class="card__btn card__btn--archive ${archiveButtonInactiveClass}">
-              archive
-            </button>
-            <button
-              type="button"
-              class="card__btn card__btn--favorites ${favoriteButtonInactiveClass}"
-            >
-              favorites
-            </button>
+            ${editButton}
+            ${archiveButton}
+            ${favoriteButton}
           </div>
 
           <div class="card__color-bar">
@@ -98,7 +105,26 @@ export default class Task extends AbstractComponent {
    * @param {function} handler
    */
   setEditButtonClickHandler(handler) {
-    this.getElement().querySelector(`.card__btn--edit`).addEventListener(`click`, handler);
+    this.getElement().querySelector(`.card__btn--edit`)
+        .addEventListener(`click`, handler);
+  }
+
+  /**
+   * Добавляет обработчик события клика на кнопу FAVORITES
+   * @param {function} handler
+   */
+  setFavoritesButtonClickHandler(handler) {
+    this.getElement().querySelector(`.card__btn--favorites`)
+        .addEventListener(`click`, handler);
+  }
+
+  /**
+   * Добавляет обработчик события клика на кнопу ARCHIVE
+   * @param {function} handler
+   */
+  setArchiveButtonClickHandler(handler) {
+    this.getElement().querySelector(`.card__btn--archive`)
+        .addEventListener(`click`, handler);
   }
 }
 

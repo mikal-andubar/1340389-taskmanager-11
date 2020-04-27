@@ -58,3 +58,19 @@ export const KEY_CODE = {
   ESCAPE: `Esc`,
   ESC: `Escape`,
 };
+
+
+export const TaskButtons = {
+  EDIT: {
+    name: `edit`,
+    property: null,
+  },
+  ARCHIVE: {
+    name: `archive`,
+    property: `isArchive`,
+  },
+  FAVORITE: {
+    name: `favorites`,
+    property: `isFavorite`
+  },
+};

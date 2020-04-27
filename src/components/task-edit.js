@@ -4,14 +4,27 @@ import {formatTime} from "../utils/common";
 
 import {COLORS, DAYS, MONTH_NAMES} from "../constants";
 
+export const TaskEditButtons = {
+  DATE_DEADLINE: {
+    name: `date-deadline-toggle`,
+    property: `isDateShowing`,
+  },
+  REPEAT: {
+    name: `repeat-toggle`,
+    property: `isRepeatingTask`,
+  },
+  COLOR: {
+    name: `color-input`,
+    property: `color`
+  },
+};
+
 /**
  * Проверка того, является ли задача периодической
  * @param {{}} repeatingDays
  * @return {boolean}
  */
-const isRepeating = (repeatingDays) => {
-  return Object.values(repeatingDays).some(Boolean);
-};
+const isRepeating = (repeatingDays) => Object.values(repeatingDays).some(Boolean);
 
 /**
  * Создает разметку для списка цветов
@@ -27,6 +40,7 @@ const createColorsMarkup = (colors, currentColor) => (
       class="card__color-input card__color-input--${color} visually-hidden"
       name="color"
       value="${color}"
+      data-name="${TaskEditButtons.COLOR.name}"
       ${currentColor === color ? `checked` : ``}
     />
     <label
@@ -73,8 +87,10 @@ const createTaskEditTemplate = (task, options = {}) => {
   const isBlockSaveButton = (isDateShowing && isRepeatingTask) ||
       (isRepeatingTask && !isRepeating(activeRepeatingDays));
 
-  const date = (isDateShowing && dueDate) ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
-  const time = (isDateShowing && dueDate) ? formatTime(dueDate) : ``;
+  const showDate = isDateShowing && dueDate;
+
+  const date = showDate ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
+  const time = showDate ? formatTime(dueDate) : ``;
 
   const repeatClass = isRepeatingTask ? `card--repeat` : ``;
   const deadlineClass = isExpired ? `card--deadline` : ``;
@@ -105,7 +121,11 @@ const createTaskEditTemplate = (task, options = {}) => {
           <div class="card__settings">
             <div class="card__details">
               <div class="card__dates">
-                <button class="card__date-deadline-toggle" type="button">
+                <button 
+                  class="card__date-deadline-toggle" 
+                  type="button"
+                  data-name="${TaskEditButtons.DATE_DEADLINE.name}"
+                >
                   date: <span class="card__date-status">${isDateShowing ? `yes` : `no`}</span>
                 </button>
 
@@ -123,7 +143,11 @@ const createTaskEditTemplate = (task, options = {}) => {
       </fieldset>` : ``
     }
 
-                <button class="card__repeat-toggle" type="button">
+                <button 
+                  class="card__repeat-toggle"
+                   type="button"
+                   data-name="${TaskEditButtons.REPEAT.name}"
+                 >
                   repeat:<span class="card__repeat-status">${isRepeatingTask ? `yes` : `no`}</span>
                 </button>
 
@@ -153,7 +177,6 @@ const createTaskEditTemplate = (task, options = {}) => {
   );
 };
 
-
 /**
  * Класс для редактора карточки задачи
  */
@@ -167,7 +190,7 @@ export default class TaskEdit extends AbstractSmartComponent {
 
     this._task = task;
     this._isDateShowing = !!task.dueDate;
-    this._isRepeatingTask = Object.values(task.repeatingDays).some(Boolean);
+    this._isRepeatingTask = isRepeating(task.repeatingDays);
     this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
     this._color = task.color;
     this._submitHandler = null;
@@ -197,7 +220,7 @@ export default class TaskEdit extends AbstractSmartComponent {
     const task = this._task;
 
     this._isDateShowing = !!task.dueDate;
-    this._isRepeatingTask = Object.values(task.repeatingDays).some(Boolean);
+    this._isRepeatingTask = isRepeating(task.repeatingDays);
     this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
     this._color = task.color;
 
@@ -222,7 +245,9 @@ export default class TaskEdit extends AbstractSmartComponent {
    * @param {function} handler
    */
   setSubmitHandler(handler) {
-    this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
+    this.getElement()
+        .querySelector(`form`)
+        .addEventListener(`submit`, handler);
     this._submitHandler = handler;
   }
 
@@ -233,26 +258,39 @@ export default class TaskEdit extends AbstractSmartComponent {
   _subscribeOnEvents() {
     const element = this.getElement();
 
-    // Обработка кликов на переключатель даты окончания задачи
-    element.querySelector(`.card__date-deadline-toggle`).addEventListener(`click`, () => {
-      this._isDateShowing = !this._isDateShowing;
-      this.rerender();
-    });
+    /**
+     * Универсальный обработчик всех кликов на кнопки формы
+     * @param {Event} event
+     */
+    const editTaskButtonClickHandler = (event) => {
+      const name = event.currentTarget.dataset.name;
+      if (undefined === name) {
+        return;
+      }
+      const currentButton = Object.values(TaskEditButtons).find((btn) => btn.name === name);
 
-    // Обработка кликов на переключатель периодичности задачи
-    element.querySelector(`.card__repeat-toggle`).addEventListener(`click`, () => {
-      this._isRepeatingTask = !this._isRepeatingTask;
+      const value = event.currentTarget.value;
+      if (value) {
+        this[`_${currentButton.property}`] = value;
+      } else {
+        this[`_${currentButton.property}`] = !this[`_${currentButton.property}`];
+      }
       this.rerender();
-    });
+    };
 
-    // Обработка кликов по цветам
-    const colorRadioButtons = element.querySelectorAll(`.card__color-input`);
-    colorRadioButtons.forEach((radio) => {
-      radio.addEventListener(`click`, (event) => {
-        this._color = event.target.value;
-        this.rerender();
+    /**
+     * Находит все элементы, удовлетворяющие условию и подписывает их на обработчик события
+     * @param {Element} taskEditButton
+     */
+    const subscribeButtonsOnClickEvent = ({name}) => {
+      const buttonElements = element.querySelectorAll(`.card__${name}`);
+      buttonElements.forEach((buttonElement) => {
+        buttonElement.addEventListener(`click`, editTaskButtonClickHandler);
       });
-    });
+    };
+
+    // Подписка кнопок формы редактирования на события click
+    Object.values(TaskEditButtons).forEach(subscribeButtonsOnClickEvent);
 
     // Обработка кликов по дням недели
     const repeatDays = element.querySelector(`.card__repeat-days`);

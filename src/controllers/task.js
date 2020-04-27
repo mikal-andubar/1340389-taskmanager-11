@@ -1,7 +1,9 @@
-import {KEY_CODE} from "../constants";
-import {componentRender, replace} from "../utils/render";
 import TaskComponent from "../components/task";
 import TaskEditComponent from "../components/task-edit";
+
+import {componentRender, replace} from "../utils/render";
+
+import {KEY_CODE, TaskButtons} from "../constants";
 
 /**
  * Режим отображения карточки, обычный или редактирование
@@ -33,6 +35,7 @@ export default class TaskController {
     this._taskEditComponent = null;
 
     this._onEscKeyDown = this._onEscKeyDown.bind(this);
+    this._onTaskCardButtonClick = this._onTaskCardButtonClick.bind(this);
   }
 
   /**
@@ -40,32 +43,7 @@ export default class TaskController {
    * @param {{}} task
    */
   render(task) {
-
-    /**
-     * Обработчик события клика по кнопке FAVORITES
-     */
-    const onFavoritesButtonClick = () => {
-      this._onDataChange(this, task, Object.assign({}, task, {
-        isFavorite: !task.isFavorite,
-      }));
-    };
-
-    /**
-     * Обработчик события клика по кнопке ARCHIVE
-     */
-    const onArchiveButtonClick = () => {
-      this._onDataChange(this, task, Object.assign({}, task, {
-        isArchive: !task.isArchive,
-      }));
-    };
-
-    /**
-     * Обработчик события клика по кнопке EDIT
-     */
-    const onEditButtonClick = () => {
-      this._replaceTaskToEdit();
-      document.addEventListener(`keydown`, this._onEscKeyDown);
-    };
+    this._task = task;
 
     /**
      * Обработчик события отправки формы
@@ -80,9 +58,7 @@ export default class TaskController {
     const oldTaskEditComponent = this._taskEditComponent;
 
     this._taskComponent = new TaskComponent(task);
-    this._taskComponent.setEditButtonClickHandler(onEditButtonClick);
-    this._taskComponent.setArchiveButtonClickHandler(onArchiveButtonClick);
-    this._taskComponent.setFavoritesButtonClickHandler(onFavoritesButtonClick);
+    this._taskComponent.setTaskCardButtonsHandler(this._onTaskCardButtonClick);
 
     this._taskEditComponent = new TaskEditComponent(task);
     this._taskEditComponent.setSubmitHandler(onEditFormSubmit);
@@ -93,6 +69,25 @@ export default class TaskController {
       replace(this._taskEditComponent, oldTaskEditComponent);
     } else {
       componentRender(this._container, this._taskComponent);
+    }
+  }
+
+  /**
+   * Универсальная функция обработки события нажатия на кнопку на карточке задачи
+   * @param {Event} event
+   * @private
+   */
+  _onTaskCardButtonClick(event) {
+    const name = event.target.dataset.name;
+    const taskButton = Object.values(TaskButtons).find((btn) => btn.name === name);
+
+    if (name === `edit`) {
+      this._replaceTaskToEdit();
+      document.addEventListener(`keydown`, this._onEscKeyDown);
+    } else {
+      this._onDataChange(this, this._task, Object.assign({}, this._task, {
+        [taskButton.property]: !this._task[taskButton.property],
+      }));
     }
   }
 

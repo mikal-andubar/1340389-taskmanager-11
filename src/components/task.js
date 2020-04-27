@@ -2,20 +2,21 @@ import AbstractComponent from "./abstract-component";
 
 import {formatTime} from "../utils/common";
 
-import {MONTH_NAMES} from "../constants";
+import {MONTH_NAMES, TaskButtons} from "../constants";
 
 /**
  * Создает шаблон кнопки на карточке
- * @param {string} name
+ * @param {{}} taskButton
  * @param {boolean} isActive
  * @return {string}
  */
-const createButtonMarkup = (name, isActive = true) => (
+const createButtonMarkup = (taskButton, isActive = true) => (
   `<button
     type="button"
-    class="card__btn card__btn--${name} ${isActive ? `` : `card__btn--disabled`}"
+    class="card__btn card__btn--${taskButton.name} ${isActive ? `` : `card__btn--disabled`}"
+    data-name = "${taskButton.name}"
   >
-    ${name}
+    ${taskButton.name}
   </button>`
 );
 
@@ -33,9 +34,9 @@ const createTaskTemplate = (task) => {
   const date = isDateShowing ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
   const time = isDateShowing ? formatTime(dueDate) : ``;
 
-  const editButton = createButtonMarkup(`edit`);
-  const archiveButton = createButtonMarkup(`archive`, isArchive);
-  const favoriteButton = createButtonMarkup(`favorites`, isFavorite);
+  const editButton = createButtonMarkup(TaskButtons.EDIT);
+  const archiveButton = createButtonMarkup(TaskButtons.ARCHIVE, isArchive);
+  const favoriteButton = createButtonMarkup(TaskButtons.FAVORITE, isFavorite);
 
   const repeatClass = Object.values(repeatingDays).some(Boolean) ? `card--repeat` : ``;
   const deadlineClass = isExpired ? `card--deadline` : ``;
@@ -101,30 +102,15 @@ export default class Task extends AbstractComponent {
   }
 
   /**
-   * Добавляет обработчик события клика на кнопку EDIT
+   * Устанавливает универсальный обработчик событий для каждой кнопки на карточке задачи
    * @param {function} handler
    */
-  setEditButtonClickHandler(handler) {
-    this.getElement().querySelector(`.card__btn--edit`)
-        .addEventListener(`click`, handler);
-  }
-
-  /**
-   * Добавляет обработчик события клика на кнопу FAVORITES
-   * @param {function} handler
-   */
-  setFavoritesButtonClickHandler(handler) {
-    this.getElement().querySelector(`.card__btn--favorites`)
-        .addEventListener(`click`, handler);
-  }
-
-  /**
-   * Добавляет обработчик события клика на кнопу ARCHIVE
-   * @param {function} handler
-   */
-  setArchiveButtonClickHandler(handler) {
-    this.getElement().querySelector(`.card__btn--archive`)
-        .addEventListener(`click`, handler);
+  setTaskCardButtonsHandler(handler) {
+    Object.values(TaskButtons).forEach(({name}) => {
+      this.getElement()
+          .querySelector(`.card__btn--${name}`)
+          .addEventListener(`click`, handler);
+    });
   }
 }
 

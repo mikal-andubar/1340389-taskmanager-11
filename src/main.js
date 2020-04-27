@@ -6,7 +6,7 @@ import BoardController from "./controllers/board";
 
 import {generateFilters} from "./mock/filters";
 import {generateTasks} from "./mock/task";
-import {render} from "./utils/render";
+import {componentRender} from "./utils/render";
 
 import {TASK_COUNT} from "./constants";
 
@@ -35,8 +35,8 @@ const tasks = generateTasks(TASK_COUNT.TOTAL);
 const filters = generateFilters(tasks);
 
 // Рендер меню сайта и фильтров
-render(siteHeaderElement, new SiteMenuComponent());
-render(siteMainElement, new FilterComponent(filters));
+componentRender(siteHeaderElement, new SiteMenuComponent());
+componentRender(siteMainElement, new FilterComponent(filters));
 
 /**
  * Доска для карточек задач
@@ -51,6 +51,6 @@ const boardComponent = new BoardComponent();
 const boardController = new BoardController(boardComponent);
 
 // Рендер доски задач и карточек в нее
-render(siteMainElement, boardComponent);
+componentRender(siteMainElement, boardComponent);
 boardController.render(tasks);
 

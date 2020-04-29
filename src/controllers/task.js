@@ -2,6 +2,7 @@ import TaskComponent from "../components/task";
 import TaskEditComponent from "../components/task-edit";
 
 import {componentRender, replace} from "../utils/render";
+import {findButtonByName} from "../utils/common";
 
 import {KEY_CODE, TaskButtons} from "../constants";
 
@@ -79,7 +80,7 @@ export default class TaskController {
    */
   _onTaskCardButtonClick(event) {
     const name = event.target.dataset.name;
-    const taskButton = Object.values(TaskButtons).find((btn) => btn.name === name);
+    const taskButton = findButtonByName(TaskButtons, name);
 
     if (name === `edit`) {
       this._replaceTaskToEdit();

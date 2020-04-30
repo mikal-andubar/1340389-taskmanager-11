@@ -1,8 +1,11 @@
 import AbstractSmartComponent from "./abstract-smart-component";
+import flatpickr from "flatpickr";
 
-import {formatTime} from "../utils/common";
+import {findButtonByName, formatDate, formatTime} from "../utils/common";
 
-import {COLORS, DAYS, MONTH_NAMES} from "../constants";
+import {COLORS, DAYS} from "../constants";
+
+import "flatpickr/dist/flatpickr.min.css";
 
 export const TaskEditButtons = {
   DATE_DEADLINE: {
@@ -89,7 +92,7 @@ const createTaskEditTemplate = (task, options = {}) => {
 
   const showDate = isDateShowing && dueDate;
 
-  const date = showDate ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
+  const date = showDate ? formatDate(dueDate) : ``;
   const time = showDate ? formatTime(dueDate) : ``;
 
   const repeatClass = isRepeatingTask ? `card--repeat` : ``;
@@ -194,7 +197,9 @@ export default class TaskEdit extends AbstractSmartComponent {
     this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
     this._color = task.color;
     this._submitHandler = null;
+    this._flatpickr = null;
 
+    this._applyFlatpickr();
     this._subscribeOnEvents();
   }
 
@@ -211,6 +216,8 @@ export default class TaskEdit extends AbstractSmartComponent {
    */
   rerender() {
     super.rerender();
+
+    this._applyFlatpickr();
   }
 
   /**
@@ -251,6 +258,22 @@ export default class TaskEdit extends AbstractSmartComponent {
     this._submitHandler = handler;
   }
 
+  _applyFlatpickr() {
+    if (this._flatpickr) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    if (this._isDateShowing) {
+      const dateElement = this.getElement().querySelector(`.card__date`);
+      this._flatpickr = flatpickr(dateElement, {
+        altInput: true,
+        allowInput: true,
+        defaultDate: this._task.dueDate || `today`,
+      });
+    }
+  }
+
   /**
    * Добавляет обработчики событий к элементам формы редактирования задачи
    * @private
@@ -267,7 +290,7 @@ export default class TaskEdit extends AbstractSmartComponent {
       if (undefined === name) {
         return;
       }
-      const currentButton = Object.values(TaskEditButtons).find((btn) => btn.name === name);
+      const currentButton = findButtonByName(TaskEditButtons, name);
 
       const value = event.currentTarget.value;
       if (value) {

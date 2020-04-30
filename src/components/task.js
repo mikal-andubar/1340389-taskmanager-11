@@ -1,8 +1,8 @@
 import AbstractComponent from "./abstract-component";
 
-import {formatTime} from "../utils/common";
+import {formatDate, formatTime} from "../utils/common";
 
-import {MONTH_NAMES, TaskButtons} from "../constants";
+import {TaskButtons} from "../constants";
 
 /**
  * Создает шаблон кнопки на карточке
@@ -31,7 +31,7 @@ const createTaskTemplate = (task) => {
   const isExpired = dueDate instanceof Date && dueDate < Date.now();
   const isDateShowing = !!dueDate;
 
-  const date = isDateShowing ? `${dueDate.getDate()} ${MONTH_NAMES[dueDate.getMonth()]}` : ``;
+  const date = isDateShowing ? formatDate(dueDate) : ``;
   const time = isDateShowing ? formatTime(dueDate) : ``;
 
   const editButton = createButtonMarkup(TaskButtons.EDIT);

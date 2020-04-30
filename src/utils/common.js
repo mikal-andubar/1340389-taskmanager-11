@@ -1,18 +1,23 @@
-/**
- * Добавление ведущего нуля к времени
- * @param {number} value
- * @return {string}
- */
-const castTimeFormat = (value) => value < 10 ? `0${value}` : String(value);
+import moment from "moment";
 
 /**
  * Форматирование времени
  * @param {Date} date
  * @return {string}
  */
-export const formatTime = (date) => {
-  const hours = castTimeFormat(date.getHours() % 24);
-  const minutes = castTimeFormat(date.getMinutes());
+export const formatTime = (date) => moment(date).format(`hh:mm`);
 
-  return `${hours}:${minutes}`;
-};
+/**
+ * Форматирование даты
+ * @param {Date} date
+ * @return {string}
+ */
+export const formatDate = (date) => moment(date).format(`DD MMMM`);
+
+/**
+ * Ищет данные кнопки по переданному ключу
+ * @param {{}} buttons
+ * @param {string} name
+ * @return {{}}
+ */
+export const findButtonByName = (buttons, name) => Object.values(buttons).find((btn) => btn.name === name);

@@ -1,12 +1,35 @@
-import AbstractSmartComponent from "./abstract-smart-component";
 import flatpickr from "flatpickr";
 
-import {findButtonByName, formatDate, formatTime} from "../utils/common";
+import AbstractSmartComponent from "./abstract-smart-component";
 
-import {COLORS, DAYS} from "../constants";
+import {findButtonByName, formatDate, formatTime, isOverdueDate, isRepeating} from "../utils/common";
+
+import {COLOR, DAYS} from "../constants";
 
 import "flatpickr/dist/flatpickr.min.css";
 
+/**
+ * Ограничение на ввод описания задачи
+ * @type {{}}
+ */
+const DESCRIPTION_LENGTH = {
+  MIN: 1,
+  MAX: 140,
+};
+
+/**
+ * Проверка введенного описания задачи
+ * @param {string} description
+ * @return {boolean}
+ */
+const isDescriptionLengthValid = (description) => (
+  description.length >= DESCRIPTION_LENGTH.MIN && description.length <= DESCRIPTION_LENGTH.MAX
+);
+
+/**
+ * Кнопки редактирования задачи
+ * @type {{}}
+ */
 export const TaskEditButtons = {
   DATE_DEADLINE: {
     name: `date-deadline-toggle`,
@@ -23,20 +46,12 @@ export const TaskEditButtons = {
 };
 
 /**
- * Проверка того, является ли задача периодической
- * @param {{}} repeatingDays
- * @return {boolean}
- */
-const isRepeating = (repeatingDays) => Object.values(repeatingDays).some(Boolean);
-
-/**
  * Создает разметку для списка цветов
- * @param {[]} colors
  * @param {string} currentColor
  * @return {string}
  */
-const createColorsMarkup = (colors, currentColor) => (
-  colors.map((color, index) => (
+const createColorsMarkup = (currentColor) => (
+  Object.values(COLOR).map((color, index) => (
     `<input
       type="radio"
       id="color-${color}-${index}"
@@ -83,12 +98,14 @@ const createRepeatingDaysMarkup = (repeatingDays) => (
  * @return {string}
  */
 const createTaskEditTemplate = (task, options = {}) => {
-  const {description, dueDate} = task;
-  const {color, isDateShowing, isRepeatingTask, activeRepeatingDays} = options;
+  const {dueDate} = task;
+  const {color, isDateShowing, isRepeatingTask, activeRepeatingDays, currentDescription: description} = options;
 
-  const isExpired = dueDate instanceof Date && dueDate < Date.now();
+  const isExpired = dueDate instanceof Date && isOverdueDate(dueDate, new Date());
+
   const isBlockSaveButton = (isDateShowing && isRepeatingTask) ||
-      (isRepeatingTask && !isRepeating(activeRepeatingDays));
+      (isRepeatingTask && !isRepeating(activeRepeatingDays)) ||
+      !isDescriptionLengthValid(description);
 
   const showDate = isDateShowing && dueDate;
 
@@ -98,7 +115,7 @@ const createTaskEditTemplate = (task, options = {}) => {
   const repeatClass = isRepeatingTask ? `card--repeat` : ``;
   const deadlineClass = isExpired ? `card--deadline` : ``;
 
-  const colorsMarkup = createColorsMarkup(COLORS, color);
+  const colorsMarkup = createColorsMarkup(color);
   const repeatingDaysMarkup = createRepeatingDaysMarkup(activeRepeatingDays);
 
   return (
@@ -181,6 +198,29 @@ const createTaskEditTemplate = (task, options = {}) => {
 };
 
 /**
+ * Обработка данных из формы
+ * @param {{}} formData
+ * @return {{}}
+ */
+const parseFormData = (formData) => {
+  const repeatingDays = DAYS.reduce((acc, day) => {
+    acc[day] = false;
+    return acc;
+  }, {});
+  const date = formData.get(`date`);
+
+  return {
+    description: formData.get(`text`),
+    color: formData.get(`color`),
+    dueDate: date ? new Date(date) : null,
+    repeatingDays: formData.getAll(`repeat`).reduce((acc, it) => {
+      acc[it] = true;
+      return acc;
+    }, repeatingDays),
+  };
+};
+
+/**
  * Класс для редактора карточки задачи
  */
 export default class TaskEdit extends AbstractSmartComponent {
@@ -196,11 +236,29 @@ export default class TaskEdit extends AbstractSmartComponent {
     this._isRepeatingTask = isRepeating(task.repeatingDays);
     this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
     this._color = task.color;
+    this._currentDescription = task.description;
     this._submitHandler = null;
     this._flatpickr = null;
+    this._deleteButtonClickHandler = null;
+
+    this._editTaskButtonClickHandler = this._editTaskButtonClickHandler.bind(this);
+    this._subscribeButtonsOnClickEvent = this._subscribeButtonsOnClickEvent.bind(this);
+    this._descriptionInputHandler = this._descriptionInputHandler.bind(this);
 
     this._applyFlatpickr();
     this._subscribeOnEvents();
+  }
+
+  /**
+   * Удаление элемента с предварительной очисткой памяти
+   */
+  removeElement() {
+    if (this._flatpickr) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    super.removeElement();
   }
 
   /**
@@ -208,6 +266,7 @@ export default class TaskEdit extends AbstractSmartComponent {
    */
   recoveryListeners() {
     this.setSubmitHandler(this._submitHandler);
+    this.setDeleteButtonClickHandler(this._deleteButtonClickHandler);
     this._subscribeOnEvents();
   }
 
@@ -230,8 +289,20 @@ export default class TaskEdit extends AbstractSmartComponent {
     this._isRepeatingTask = isRepeating(task.repeatingDays);
     this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
     this._color = task.color;
+    this._currentDescription = task.description;
 
     this.rerender();
+  }
+
+  /**
+   * Получение данных из формы
+   * @return {{}}
+   */
+  getData() {
+    const form = this.getElement().querySelector(`.card__form`);
+    const formData = new FormData(form);
+
+    return parseFormData(formData);
   }
 
   /**
@@ -244,6 +315,7 @@ export default class TaskEdit extends AbstractSmartComponent {
       isDateShowing: this._isDateShowing,
       isRepeatingTask: this._isRepeatingTask,
       activeRepeatingDays: this._activeRepeatingDays,
+      currentDescription: this._currentDescription,
     });
   }
 
@@ -256,6 +328,17 @@ export default class TaskEdit extends AbstractSmartComponent {
         .querySelector(`form`)
         .addEventListener(`submit`, handler);
     this._submitHandler = handler;
+  }
+
+  /**
+   * Устанавливает обработчик события нажатия на кнопку DELETE
+   * @param {function} handler
+   */
+  setDeleteButtonClickHandler(handler) {
+    this.getElement().querySelector(`.card__delete`)
+        .addEventListener(`click`, handler);
+
+    this._deleteButtonClickHandler = handler;
   }
 
   _applyFlatpickr() {
@@ -281,39 +364,11 @@ export default class TaskEdit extends AbstractSmartComponent {
   _subscribeOnEvents() {
     const element = this.getElement();
 
-    /**
-     * Универсальный обработчик всех кликов на кнопки формы
-     * @param {Event} event
-     */
-    const editTaskButtonClickHandler = (event) => {
-      const name = event.currentTarget.dataset.name;
-      if (undefined === name) {
-        return;
-      }
-      const currentButton = findButtonByName(TaskEditButtons, name);
-
-      const value = event.currentTarget.value;
-      if (value) {
-        this[`_${currentButton.property}`] = value;
-      } else {
-        this[`_${currentButton.property}`] = !this[`_${currentButton.property}`];
-      }
-      this.rerender();
-    };
-
-    /**
-     * Находит все элементы, удовлетворяющие условию и подписывает их на обработчик события
-     * @param {Element} taskEditButton
-     */
-    const subscribeButtonsOnClickEvent = ({name}) => {
-      const buttonElements = element.querySelectorAll(`.card__${name}`);
-      buttonElements.forEach((buttonElement) => {
-        buttonElement.addEventListener(`click`, editTaskButtonClickHandler);
-      });
-    };
+    element.querySelector(`.card__text`)
+        .addEventListener(`input`, this._descriptionInputHandler);
 
     // Подписка кнопок формы редактирования на события click
-    Object.values(TaskEditButtons).forEach(subscribeButtonsOnClickEvent);
+    Object.values(TaskEditButtons).forEach(this._subscribeButtonsOnClickEvent);
 
     // Обработка кликов по дням недели
     const repeatDays = element.querySelector(`.card__repeat-days`);
@@ -323,5 +378,49 @@ export default class TaskEdit extends AbstractSmartComponent {
         this.rerender();
       });
     }
+  }
+
+  /**
+   * Обработчик события ввода в поле описания задачи
+   * @param {Event} event
+   * @private
+   */
+  _descriptionInputHandler(event) {
+    this._currentDescription = event.target.value;
+
+    const saveButton = this.getElement().querySelector(`.card__save`);
+    saveButton.disabled = !isDescriptionLengthValid(this._currentDescription);
+  }
+
+  /**
+   * Находит все элементы, удовлетворяющие условию и подписывает их на обработчик события
+   * @param {Element} taskEditButton
+   */
+  _subscribeButtonsOnClickEvent({name}) {
+    const buttonElements = this.getElement().querySelectorAll(`.card__${name}`);
+    buttonElements.forEach((buttonElement) => {
+      buttonElement.addEventListener(`click`, this._editTaskButtonClickHandler);
+    });
+  }
+
+  /**
+   * Универсальный обработчик всех кликов на кнопки формы
+   * @param {Event} event
+   * @private
+   */
+  _editTaskButtonClickHandler(event) {
+    const name = event.currentTarget.dataset.name;
+    if (undefined === name) {
+      return;
+    }
+    const currentButton = findButtonByName(TaskEditButtons, name);
+
+    const value = event.currentTarget.value;
+    if (value) {
+      this[`_${currentButton.property}`] = value;
+    } else {
+      this[`_${currentButton.property}`] = !this[`_${currentButton.property}`];
+    }
+    this.rerender();
   }
 }

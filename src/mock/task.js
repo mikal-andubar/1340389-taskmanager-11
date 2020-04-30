@@ -1,4 +1,4 @@
-import {COLORS, DAYS} from "../constants";
+import {COLOR, DAYS} from "../constants";
 
 /**
  * Возможные значения для случайного заполнения поля description
@@ -59,16 +59,19 @@ const generateRepeatingDays = () => Object.fromEntries(DAYS.map((it) => [it, Mat
 
 /**
  * Генерирует данные для задачи
+ * @param {{}} task
+ * @param {number} index
  * @return {{}}
  */
-const generateTask = () => {
+const generateTask = (task, index) => {
   const dueDate = getRandomBool() ? null : getRandomDate();
 
   return {
+    id: index,
     description: getRandomArrayItem(descriptionItems),
     dueDate,
     repeatingDays: dueDate ? defaultRepeatingDays : generateRepeatingDays(),
-    color: getRandomArrayItem(COLORS),
+    color: getRandomArrayItem(Object.values(COLOR)),
     isArchive: getRandomBool(),
     isFavorite: getRandomBool(),
   };

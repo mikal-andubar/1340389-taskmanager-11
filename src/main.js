@@ -1,14 +1,15 @@
-import SiteMenuComponent from "./components/site-menu";
-import FilterComponent from "./components/filters";
+import SiteMenuComponent, {Navigation} from "./components/site-menu";
 import BoardComponent from "./components/board";
+
+import TasksModel from "./model/tasks";
 
 import BoardController from "./controllers/board";
 
-import {generateFilters} from "./mock/filters";
 import {generateTasks} from "./mock/task";
 import {componentRender} from "./utils/render";
 
 import {TASK_COUNT} from "./constants";
+import FilterController from "./controllers/filter";
 
 /**
  * Основной элемент страницы
@@ -23,34 +24,50 @@ const siteMainElement = document.querySelector(`.main`);
 const siteHeaderElement = siteMainElement.querySelector(`.main__control`);
 
 /**
+ * Меню сайта
+ * @type {SiteMenu}
+ */
+const siteMenuComponent = new SiteMenuComponent();
+componentRender(siteHeaderElement, siteMenuComponent);
+
+/**
  * Задачи
  * @type {{}[]}
  */
 const tasks = generateTasks(TASK_COUNT.TOTAL);
 
 /**
- * Фильтры
- * @type {[]}
+ * Модель задач
+ * @type {Tasks}
  */
-const filters = generateFilters(tasks);
+const tasksModel = new TasksModel();
+tasksModel.setTasks(tasks);
 
-// Рендер меню сайта и фильтров
-componentRender(siteHeaderElement, new SiteMenuComponent());
-componentRender(siteMainElement, new FilterComponent(filters));
+const filterController = new FilterController(siteMainElement, tasksModel);
+filterController.render();
 
 /**
  * Доска для карточек задач
  * @type {Board}
  */
 const boardComponent = new BoardComponent();
+componentRender(siteMainElement, boardComponent);
 
 /**
  * Контроллер
  * @type {BoardController}
  */
-const boardController = new BoardController(boardComponent);
+const boardController = new BoardController(boardComponent, tasksModel);
+boardController.render();
 
-// Рендер доски задач и карточек в нее
-componentRender(siteMainElement, boardComponent);
-boardController.render(tasks);
+siteMenuComponent.setOnChange((menuItemId) => {
+  const name = menuItemId.slice(`control__`.length);
+  const menuItem = Object.values(Navigation).find((item) => item.name === name);
+  switch (menuItem) {
+    case Navigation.NEW_TASK:
+      siteMenuComponent.setActiveItem(menuItem.name);
+      boardController.createTask();
+      break;
+  }
+});
 

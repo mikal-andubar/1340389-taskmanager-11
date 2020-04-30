@@ -1,33 +1,50 @@
 import AbstractComponent from "./abstract-component";
 
 /**
+ * Массив с конфигом для меню
+ * @type {{}}
+ */
+export const Navigation = {
+  NEW_TASK: {
+    name: `new-task`,
+    label: `+ ADD NEW TASK`
+  },
+  TASKS: {
+    name: `task`,
+    label: `TASKS`
+  },
+  STATISTICS: {
+    name: `statistic`,
+    label: `STATISTICS`
+  },
+};
+
+/**
+ * создает шаблон для одного пункта меню
+ * @param {{}} menuItem
+ * @return {string}
+ */
+const createSiteMenuItemTemplate = (menuItem) => {
+  const {name, label} = menuItem;
+
+  return (
+    `<input
+      type="radio"
+      name="control"
+      id="control__${name}"
+      class="control__input visually-hidden"
+    />
+    <label for="control__${name}" class="control__label control__label--${name}">${label}</label>`
+  );
+};
+
+/**
  * Создание шаблона меню сайта
  * @return {string}
  */
-const createSiteMenuTemplate = () => (
+export const createSiteMenuTemplate = () => (
   `<section class="control__btn-wrap">
-    <input
-      type="radio"
-      name="control"
-      id="control__new-task"
-      class="control__input visually-hidden"
-    />
-    <label for="control__new-task" class="control__label control__label--new-task">+ ADD NEW TASK</label>
-    <input
-      type="radio"
-      name="control"
-      id="control__task"
-      class="control__input visually-hidden"
-      checked
-    />
-    <label for="control__task" class="control__label">TASKS</label>
-    <input
-      type="radio"
-      name="control"
-      id="control__statistic"
-      class="control__input visually-hidden"
-    />
-    <label for="control__statistic" class="control__label">STATISTICS</label>
+    ${Object.values(Navigation).map((it) => createSiteMenuItemTemplate(it)).join(`\n`)}
   </section>`
 );
 
@@ -41,5 +58,33 @@ export default class SiteMenu extends AbstractComponent {
    */
   getTemplate() {
     return createSiteMenuTemplate();
+  }
+
+  /**
+   * Устанавливает активный пункт меню
+   * @param {string} itemName
+   */
+  setActiveItem(itemName) {
+    const item = this.getElement().querySelector(`#control__${itemName}`);
+
+    if (item) {
+      item.checked = true;
+    }
+  }
+
+  /**
+   * Устанавливает обработчик изменения выбора меню
+   * @param {function} handler
+   */
+  setOnChange(handler) {
+    this.getElement().addEventListener(`change`, (event) => {
+      if (event.target.tagName !== `INPUT`) {
+        return;
+      }
+
+      const menuItem = event.target.id;
+
+      handler(menuItem);
+    });
   }
 }

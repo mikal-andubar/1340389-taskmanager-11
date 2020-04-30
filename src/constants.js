@@ -1,8 +1,14 @@
 /**
  * Цвета
- * @type {string[]}
+ * @type {{}}
  */
-export const COLORS = [`black`, `yellow`, `blue`, `green`, `pink`];
+export const COLOR = {
+  BLACK: `black`,
+  YELLOW: `yellow`,
+  BLUE: `blue`,
+  GREEN: `green`,
+  PINK: `pink`
+};
 
 /**
  * Сокращенные наименования дней недели
@@ -40,7 +46,10 @@ export const KEY_CODE = {
   ESC: `Escape`,
 };
 
-
+/**
+ * Данные для кнопок на карточке задачи
+ * @type {{}}
+ */
 export const TaskButtons = {
   EDIT: {
     name: `edit`,
@@ -54,4 +63,17 @@ export const TaskButtons = {
     name: `favorites`,
     property: `isFavorite`
   },
+};
+
+/**
+ * Типы фильтров
+ * @type {{}}
+ */
+export const FilterType = {
+  ALL: `all`,
+  ARCHIVE: `archive`,
+  FAVORITES: `favorites`,
+  OVERDUE: `overdue`,
+  REPEATING: `repeating`,
+  TODAY: `today`,
 };

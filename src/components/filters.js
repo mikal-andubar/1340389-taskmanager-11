@@ -1,6 +1,21 @@
 import AbstractComponent from "./abstract-component";
 
 /**
+ * Префикс элемента фильтра
+ * @type {string}
+ */
+const FILTER_ID_PREFIX = `filter__`;
+
+/**
+ * Возвращает имя фильтра по переданному ID
+ * @param {number} id
+ * @return {string}
+ */
+const getFilterNameById = (id) => {
+  return id.substring(FILTER_ID_PREFIX.length);
+};
+
+/**
  * Создание разметки одного фильтра
  * @param {[]} filter
  * @param {number} index
@@ -57,4 +72,16 @@ export default class Filter extends AbstractComponent {
   getTemplate() {
     return createFiltersTemplate(this._filters);
   }
+
+  /**
+   * Устанавливает обработчик смены фильтра
+   * @param {function} handler
+   */
+  setFilterChangeHandler(handler) {
+    this.getElement().addEventListener(`change`, (event) => {
+      const filterName = getFilterNameById(event.target.id);
+      handler(filterName);
+    });
+  }
+
 }

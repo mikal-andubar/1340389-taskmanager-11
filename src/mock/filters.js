@@ -1,12 +1,12 @@
-import {DAYS} from "../constants";
+import {DAYS, FilterType} from "../constants";
 
 const EMPTY_FILTERS = [
-  {name: `all`, count: 0},
-  {name: `overdue`, count: 0},
-  {name: `today`, count: 0},
-  {name: `favorites`, count: 0},
-  {name: `repeating`, count: 0},
-  {name: `archive`, count: 0},
+  {name: FilterType.ALL, count: 0},
+  {name: FilterType.OVERDUE, count: 0},
+  {name: FilterType.TODAY, count: 0},
+  {name: FilterType.FAVORITES, count: 0},
+  {name: FilterType.REPEATING, count: 0},
+  {name: FilterType.ARCHIVE, count: 0},
 ];
 
 /**

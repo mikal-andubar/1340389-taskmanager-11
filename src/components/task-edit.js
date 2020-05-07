@@ -232,11 +232,8 @@ export default class TaskEdit extends AbstractSmartComponent {
     super();
 
     this._task = task;
-    this._isDateShowing = !!task.dueDate;
-    this._isRepeatingTask = isRepeating(task.repeatingDays);
-    this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
-    this._color = task.color;
-    this._currentDescription = task.description;
+    this._resetTaskValues();
+
     this._submitHandler = null;
     this._flatpickr = null;
     this._deleteButtonClickHandler = null;
@@ -283,13 +280,7 @@ export default class TaskEdit extends AbstractSmartComponent {
    * Сброс значений для карточки редактирования
    */
   reset() {
-    const task = this._task;
-
-    this._isDateShowing = !!task.dueDate;
-    this._isRepeatingTask = isRepeating(task.repeatingDays);
-    this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
-    this._color = task.color;
-    this._currentDescription = task.description;
+    this._resetTaskValues();
 
     this.rerender();
   }
@@ -422,5 +413,19 @@ export default class TaskEdit extends AbstractSmartComponent {
       this[`_${currentButton.property}`] = !this[`_${currentButton.property}`];
     }
     this.rerender();
+  }
+
+  /**
+   * Сбрасывает значения параметров, связанных с задачей
+   * @private
+   */
+  _resetTaskValues() {
+    const task = this._task;
+
+    this._isDateShowing = !!task.dueDate;
+    this._isRepeatingTask = isRepeating(task.repeatingDays);
+    this._activeRepeatingDays = Object.assign({}, task.repeatingDays);
+    this._color = task.color;
+    this._currentDescription = task.description;
   }
 }

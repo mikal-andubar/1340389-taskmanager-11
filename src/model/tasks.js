@@ -1,9 +1,9 @@
-/**
- * Модель данных для задач
- */
 import {FilterType} from "../constants";
 import {getTasksByFilter} from "../utils/filter";
 
+/**
+ * Модель данных для задач
+ */
 export default class Tasks {
 
   /**

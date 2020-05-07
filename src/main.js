@@ -60,14 +60,16 @@ componentRender(siteMainElement, boardComponent);
 const boardController = new BoardController(boardComponent, tasksModel);
 boardController.render();
 
-siteMenuComponent.setOnChange((menuItemId) => {
+const menuItemChangeHandler = (menuItemId) => {
   const name = menuItemId.slice(`control__`.length);
   const menuItem = Object.values(Navigation).find((item) => item.name === name);
   switch (menuItem) {
     case Navigation.NEW_TASK:
-      siteMenuComponent.setActiveItem(menuItem.name);
+      siteMenuComponent.setActiveItem(Navigation.TASKS.name);
       boardController.createTask();
       break;
   }
-});
+};
+
+siteMenuComponent.setOnChange(menuItemChangeHandler);
 

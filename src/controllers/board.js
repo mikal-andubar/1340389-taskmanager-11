@@ -195,6 +195,66 @@ export default class BoardController {
   }
 
   /**
+   * Прячет последнюю из отображаемых карточек, чтобы добавить новую
+   * @private
+   */
+  _hideExcessCard() {
+    if (this._showingTasksCount % TASK_COUNT.ON_BUTTON === 0) {
+      const destroyedTask = this._showedTaskControllers.pop();
+      destroyedTask.destroy();
+    }
+  }
+
+  /**
+   * Добавляет новую задачу
+   * @param {TaskController} taskController
+   * @param {{}} newData
+   * @private
+   */
+  _addNewTask(taskController, newData) {
+    this._creatingTask = null;
+    if (newData === null) {
+      taskController.destroy();
+      this._updateTasks(this._showingTasksCount);
+    } else {
+      this._tasksModel.addTask(newData);
+      taskController.render(newData);
+
+      this._hideExcessCard();
+
+      this._showedTaskControllers = [].concat(taskController, this._showedTaskControllers);
+      this._showingTasksCount = this._showedTaskControllers.length;
+
+      this._renderLoadMoreButton();
+    }
+  }
+
+  /**
+   * Удаляет задачу с доски
+   * @param {{}} oldData
+   * @private
+   */
+  _deleteTask(oldData) {
+    this._tasksModel.removeTask(oldData.id);
+    this._updateTasks(this._showingTasksCount);
+  }
+
+  /**
+   * Редактирует существующую задачу
+   * @param {TaskController} taskController
+   * @param {{}} oldData
+   * @param {{}} newData
+   * @private
+   */
+  _editTask(taskController, oldData, newData) {
+    const isSuccess = this._tasksModel.updateTask(oldData.id, newData);
+
+    if (isSuccess) {
+      taskController.render(newData);
+    }
+  }
+
+  /**
    * Обработчик изменения данных задачи
    * @param {TaskController} taskController
    * @param {{}} oldData
@@ -202,34 +262,16 @@ export default class BoardController {
    * @private
    */
   _onDataChange(taskController, oldData, newData) {
-    if (oldData === EmptyTask) {
-      this._creatingTask = null;
-      if (newData === null) {
-        taskController.destroy();
-        this._updateTasks(this._showingTasksCount);
-      } else {
-        this._tasksModel.addTask(newData);
-        taskController.render(newData);
-
-        if (this._showingTasksCount % TASK_COUNT.ON_BUTTON === 0) {
-          const destroyedTask = this._showedTaskControllers.pop();
-          destroyedTask.destroy();
-        }
-
-        this._showedTaskControllers = [].concat(taskController, this._showedTaskControllers);
-        this._showingTasksCount = this._showedTaskControllers.length;
-
-        this._renderLoadMoreButton();
-      }
-    } else if (newData === null) {
-      this._tasksModel.removeTask(oldData.id);
-      this._updateTasks(this._showingTasksCount);
-    } else {
-      const isSuccess = this._tasksModel.updateTask(oldData.id, newData);
-
-      if (isSuccess) {
-        taskController.render(newData);
-      }
+    switch (true) {
+      case oldData === EmptyTask:
+        this._addNewTask(taskController, newData);
+        return;
+      case newData === null:
+        this._deleteTask(oldData);
+        return;
+      default:
+        this._editTask(taskController, oldData, newData);
+        return;
     }
   }
 
